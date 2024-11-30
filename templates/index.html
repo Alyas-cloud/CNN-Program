@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        #preview {
+            max-width: 300px;
+            margin-top: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fruit Classifier with AI Content Generation</h1>
+        <p>Upload an image of a fruit to classify it and learn about its benefits.</p>
+        <form id="upload-form">
+            <input type="file" id="file-input" name="file" accept="image/*" required>
+            <button type="submit">Predict</button>
+        </form>
+        <img id="preview" alt="Image Preview">
+        <div class="result" id="result">
+            <h2>Prediction Result</h2>
+            <p id="predicted-class"></p>
+            <p id="confidence"></p>
+            <h3>Benefits</h3>
+            <p id="generated-text"></p>
+        </div>
+    </div>
+    <script>
+        const form = document.getElementById("upload-form");
+        const fileInput = document.getElementById("file-input");
+        const preview = document.getElementById("preview");
+        const resultDiv = document.getElementById("result");
+        const predictedClassElem = document.getElementById("predicted-class");
+        const confidenceElem = document.getElementById("confidence");
+        const generatedTextElem = document.getElementById("generated-text");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a file first!");
+                return;
+            }
+
+            // Display the image preview
+            const reader = new FileReader();
+            reader.onload = () => {
+                preview.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+
+            // Create form data and send to the server
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert(errorData.error || "An error occurred!");
+                    return;
+                }
+
+                const data = await response.json();
+                predictedClassElem.textContent = `Class: ${data.predicted_class}`;
+                confidenceElem.textContent = `Confidence: ${data.confidence}%`;
+                generatedTextElem.textContent = data.generated_text;
+
+                resultDiv.style.display = "block";
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred while predicting. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>
